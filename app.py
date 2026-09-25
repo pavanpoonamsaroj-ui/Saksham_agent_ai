@@ -81,8 +81,11 @@ with col2:
                 llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.2)
                 
                 # Simple 1-liner clean string extraction
-                raw_ans = llm.invoke(f"Context:\n{ctx}\n\nQuestion: {q}\nAnswer concisely:").content
-                ans = str(raw_ans).split(", 'extras':")[0].replace("[{'text': '", "").replace("'}]", "").strip()
+                raw_ans = llm.invoke(...).content
+                if isinstance(raw_ans, list) and len(raw_ans) > 0:
+                    ans = raw_ans[0].get('text', str(raw_ans))
+                else:
+                    ans = str(raw_ans).split(", 'extras':")[0].replace("[{'text': '", "").replace("'}]", "").strip()
             else:
                 ans = "Please upload a document first."
 
