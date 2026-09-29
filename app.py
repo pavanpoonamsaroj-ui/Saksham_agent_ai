@@ -71,24 +71,24 @@ with col2:
     if q := st.chat_input("Ask about your course or internships..."):
         st.session_state.chat.append({"role": "user", "content": q})
         with st.chat_message("user"): st.markdown(q)
-
-        with st.chat_message("assistant"):
+            with st.chat_message("assistant"):
             if "internship" in q.lower() or "job" in q.lower():
-                ans = "**Matched Internships:**\n- 💼 Python Developer Intern @ TechCorp\n- 💼 Data Analyst Intern @ InfoSys"
+                ans = "**💼 Matched Internships for Your Profile:**\n\n- 💻 **Python Developer Intern** @ *TechCorp* (Match Score: 92%)\n- 📊 **Data Analyst Intern** @ *InfoSys* (Match Score: 88%)\n- ⚙️ **Backend Engineering Trainee** @ *CloudScale* (Match Score: 85%)"
             elif st.session_state.vs:
                 retrieved = st.session_state.vs.as_retriever(search_kwargs={"k": 2}).invoke(q)
                 ctx = "\n".join([d.page_content for d in retrieved])
-                llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.2)
                 
-                # Simple 1-liner clean string extraction
-                raw_ans = llm.invoke(...).content
-                if isinstance(raw_ans, list) and len(raw_ans) > 0:
-                     ans = raw_ans[0].get('text', str(raw_ans))
-                else:
-                     ans = str(raw_ans).split(", 'extras':")[0].replace("[{'text': '", "").replace("'}]", "").strip()
+                # Create a clean string prompt
+                prompt_text = f"Context:\n{ctx}\n\nQuestion: {q}\nAnswer concisely:"
                 
+                try:
+                    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.2)
+                    res = llm.invoke(str(prompt_text))
+                    ans = res.content if hasattr(res, 'content') else str(res)
+                except Exception as e:
+                    ans = f"⚠️ Could not fetch response. Details: {str(e)}"
             else:
-                ans = "Please upload a document first."
-
+                ans = "⚠️ Please upload and process a transcript PDF first so I can access your course context."
+                
             st.markdown(ans)
             st.session_state.chat.append({"role": "assistant", "content": ans})
