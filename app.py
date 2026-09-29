@@ -4,9 +4,19 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_google_genai import ChatGoogleGenerativeAI
+from dotenv import load_dotenv
 
-# 1. SETUP API KEY
-os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY", "")
+load_dotenv()  # Load environment variables from .env file
+
+
+# Read API Key from Streamlit Secrets or Environment Variables
+api_key = os.getenv("GOOGLE_API_KEY", "")
+if not api_key:
+    try:
+        api_key = st.secrets.get("GOOGLE_API_KEY", "")
+    except Exception:
+        api_key = ""
+os.environ["GOOGLE_API_KEY"] = api_key
 
 st.set_page_config(page_title="Education Agent", layout="wide")
 st.title("🎓 Track 3: Transcript & Study Plan Agent")
@@ -79,15 +89,15 @@ with col2:
                 retrieved = st.session_state.vs.as_retriever(search_kwargs={"k": 2}).invoke(q)
                 ctx = "\n".join([d.page_content for d in retrieved])
                 prompt_text = str(f"Context:\n{ctx}\n\nQuestion: {q}\nAnswer concisely:")
-                llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", google_api_key=os.getenv("GOOGLE_API_KEY", ""), temperature=0.2)
+                
+                llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=api_key, temperature=0.2)
                 raw_ans = llm.invoke(prompt_text).content
                 if isinstance(raw_ans, list) and len(raw_ans) > 0:
                      ans = raw_ans[0].get('text', str(raw_ans))
                 else:
                      ans = str(raw_ans).split(", 'extras':")[0].replace("[{'text': '", "").replace("'}]", "").strip()
-                
             else:
-                ans = "Please upload a document first."
+                 ans = "Please upload a document first."
 
             st.markdown(ans)
             st.session_state.chat.append({"role": "assistant", "content": ans})
