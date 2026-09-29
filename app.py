@@ -78,10 +78,9 @@ with col2:
             elif st.session_state.vs:
                 retrieved = st.session_state.vs.as_retriever(search_kwargs={"k": 2}).invoke(q)
                 ctx = "\n".join([d.page_content for d in retrieved])
-                llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.2)
-                
-                # Simple 1-liner clean string extraction
-                raw_ans = llm.invoke(...).content
+                prompt_text = str(f"Context:\n{ctx}\n\nQuestion: {q}\nAnswer concisely:")
+                llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", google_api_key=os.getenv("GOOGLE_API_KEY", ""), temperature=0.2)
+                raw_ans = llm.invoke(prompt_text).content
                 if isinstance(raw_ans, list) and len(raw_ans) > 0:
                      ans = raw_ans[0].get('text', str(raw_ans))
                 else:
